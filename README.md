@@ -96,4 +96,7 @@ Config is stored at:
 
 ## License
 
-MIT
+GPL-v3
+
+### Community
+[Linux.do](https://linux.do)
