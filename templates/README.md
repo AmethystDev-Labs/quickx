@@ -1,6 +1,6 @@
 # quick templates
 
-Community-maintained provider templates for [quick](https://github.com/quickcli/quick).
+Community-maintained provider templates for [quick](https://github.com/AmethystDev-Labs/QuickCLI).
 
 ## Structure
 
