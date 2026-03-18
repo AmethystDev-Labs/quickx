@@ -5,7 +5,7 @@ Switch AI coding assistant providers — Claude Code and OpenAI Codex — with a
 ## Installation
 
 ```bash
-npm install -g quickcli
+npm install -g @starryskyworld/quickcli
 ```
 
 Or download a binary directly from [GitHub Releases](https://github.com/quickcli/quick/releases).
