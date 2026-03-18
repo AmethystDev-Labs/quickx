@@ -21,7 +21,7 @@ By default uses the browser OAuth (PKCE) flow.
 Use --device for SSH / headless environments (device-code flow).`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		configName := "codex-chatgpt"
+		configName := "" // empty → API derives name from email in id_token
 		if len(args) > 0 {
 			configName = args[0]
 		}

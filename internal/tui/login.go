@@ -23,14 +23,14 @@ const (
 )
 
 type loginMethodScreen struct {
-	api         *app.API
-	profileName string
-	cursor      int
-	width       int
+	api        *app.API
+	configName string
+	cursor     int
+	width      int
 }
 
-func newLoginMethodScreen(api *app.API, profileName string) *loginMethodScreen {
-	return &loginMethodScreen{api: api, profileName: profileName}
+func newLoginMethodScreen(api *app.API, configName string) *loginMethodScreen {
+	return &loginMethodScreen{api: api, configName: configName}
 }
 
 func (m *loginMethodScreen) Init() tea.Cmd { return nil }
@@ -53,9 +53,9 @@ func (m *loginMethodScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "enter", " ":
 			if m.cursor == 0 {
-				return m, Push(newLoginExecScreen(m.api, m.profileName, loginMethodBrowser))
+				return m, Push(newLoginExecScreen(m.api, m.configName, loginMethodBrowser))
 			}
-			return m, Push(newLoginExecScreen(m.api, m.profileName, loginMethodDevice))
+			return m, Push(newLoginExecScreen(m.api, m.configName, loginMethodDevice))
 		}
 	}
 	return m, nil
