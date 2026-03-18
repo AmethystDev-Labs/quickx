@@ -1,0 +1,10 @@
+id: imsnake
+display_name: ImSnake
+scope:
+  - codex
+base_url: https://imsnake.dart.us.ci/v1
+api_key: '${--:"ImSnake API Key":""}'
+model: '${--:"Default model":"gpt-4o"}'
+wire_api: responses
+auth_method: api_key
+docs_url: https://imsnake.dart.us.ci
