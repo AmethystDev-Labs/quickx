@@ -47,8 +47,8 @@ checksum:
 
 release:
   github:
-    owner: quickcli
-    name: quick
+    owner: AmethystDev-Labs
+    name: QuickCLI
 
 changelog:
   sort: asc

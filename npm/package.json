@@ -1,13 +1,13 @@
 {
   "name": "quickcli",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Switch AI coding assistant providers (Claude Code, Codex) with one command",
   "keywords": ["ai", "codex", "claude", "cli", "provider"],
-  "homepage": "https://github.com/quickcli/quick",
-  "license": "MIT",
+  "homepage": "https://github.com/AmethystDev-Labs/QuickCLI",
+  "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://github.com/quickcli/quick.git"
+    "url": "https://github.com/AmethystDev-Labs/QuickCLI.git"
   },
   "scripts": {
     "postinstall": "node install.js"

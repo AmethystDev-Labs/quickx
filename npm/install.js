@@ -10,8 +10,8 @@ const path = require("path");
 const { execSync } = require("child_process");
 const { version } = require("./package.json");
 
-const GITHUB_OWNER = "quickcli";
-const GITHUB_REPO = "quick";
+const GITHUB_OWNER = "AmethystDev-Labs";
+const GITHUB_REPO = "QuickCLI";
 
 function getPlatformAsset() {
   const { platform, arch } = process;
