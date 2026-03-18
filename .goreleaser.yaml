@@ -1,0 +1,59 @@
+version: 2
+
+project_name: quick
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: quick
+    main: ./main.go
+    binary: quick
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+archives:
+  - id: quick
+    builds: [quick]
+    name_template: >-
+      quick_{{ .Version }}_
+      {{- if eq .Os "darwin" }}macOS
+      {{- else if eq .Os "linux" }}Linux
+      {{- else }}Windows{{ end }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}arm64{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  github:
+    owner: quickcli
+    name: quick
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
