@@ -2,22 +2,44 @@
   "name": "@starryskyworld/quickcli",
   "version": "1.0.6",
   "description": "Switch AI coding assistant providers (Claude Code, Codex, OpenCode) with one command",
-  "keywords": ["ai", "codex", "claude", "cli", "provider"],
+  "keywords": [
+    "ai",
+    "codex",
+    "claude",
+    "cli",
+    "provider"
+  ],
   "homepage": "https://github.com/AmethystDev-Labs/QuickCLI",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "https://github.com/AmethystDev-Labs/QuickCLI.git"
   },
+  "dependencies": {
+    "commander": "^14.0.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^11.2.0"
+  },
+  "optionalDependencies": {
+    "@starryskyworld/quickcli-darwin-arm64": "1.0.6",
+    "@starryskyworld/quickcli-darwin-x64": "1.0.6",
+    "@starryskyworld/quickcli-linux-arm64": "1.0.6",
+    "@starryskyworld/quickcli-linux-x64": "1.0.6",
+    "@starryskyworld/quickcli-win32-x64": "1.0.6"
+  },
   "scripts": {
-    "postinstall": "node install.js"
+    "build:artifacts": "node scripts/build-platform-artifacts.js",
+    "sync:platform-deps": "node scripts/set-platform-deps-version.js",
+    "stage:platform": "node scripts/stage-platform-package.js"
   },
   "bin": {
     "quick": "./bin/quick.js"
   },
   "files": [
-    "install.js",
-    "bin/"
+    "bin/",
+    "lib/",
+    "README.md"
   ],
   "engines": {
     "node": ">=16"

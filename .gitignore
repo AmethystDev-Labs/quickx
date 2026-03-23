@@ -2,6 +2,13 @@
 quick
 quick.exe
 dist/
+npm/dist/
+npm/node_modules/
+npm/*.tgz
+npm/bin/quick-tui
+npm/bin/quick-tui.exe
+npm/native/build/
+npm/native/lib/
 
 # Go build cache
 *.test
