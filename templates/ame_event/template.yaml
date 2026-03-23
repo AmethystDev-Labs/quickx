@@ -2,6 +2,7 @@ id: ame_event
 display_name: AmeEvent
 scope:
   - codex
+  - opencode
 base_url: https://cx-nya.zeabur.app/v1
 api_key: 'AmethystLabs'
 model: '${--:"Default model":"gpt-5.4"}'
