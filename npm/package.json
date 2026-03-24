@@ -30,6 +30,8 @@
   },
   "scripts": {
     "build:artifacts": "node scripts/build-platform-artifacts.js",
+    "postinstall": "node scripts/postinstall.js",
+    "prepare:platform": "node scripts/prepare-platform-package.js",
     "sync:platform-deps": "node scripts/set-platform-deps-version.js",
     "stage:platform": "node scripts/stage-platform-package.js"
   },
@@ -39,6 +41,7 @@
   "files": [
     "bin/",
     "lib/",
+    "scripts/",
     "README.md"
   ],
   "engines": {

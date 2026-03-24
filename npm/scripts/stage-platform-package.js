@@ -35,22 +35,53 @@ function writeJSON(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function inferArtifactPaths(platform) {
+  const addon = path.join("native", "build", "Release", "quickaddon.node");
+  const isWindows = platform === "win32";
+  const tui = path.join("bin", isWindows ? "quick-tui.exe" : "quick-tui");
+
+  if (platform === "darwin") {
+    return {
+      addon,
+      tui,
+      coreLib: path.join("native", "lib", "libquickcore.dylib"),
+    };
+  }
+
+  if (platform === "linux") {
+    return {
+      addon,
+      tui,
+      coreLib: path.join("native", "lib", "libquickcore.so"),
+    };
+  }
+
+  if (platform === "win32") {
+    return {
+      addon,
+      tui,
+      coreDll: path.join("native", "lib", "quickcore.dll"),
+    };
+  }
+
+  throw new Error(`Unsupported platform ${platform}`);
+}
+
 function main() {
   const args = parseArgs(process.argv);
-  const required = [
-    "platform",
-    "arch",
-    "version",
-    "addon",
-    "tui",
-    "output-dir",
-  ];
+  const required = ["platform", "arch", "version", "output-dir"];
 
   for (const key of required) {
     if (!args[key]) {
       throw new Error(`Missing required --${key}`);
     }
   }
+
+  const inferred = inferArtifactPaths(args.platform);
+  args.addon = args.addon || inferred.addon;
+  args.tui = args.tui || inferred.tui;
+  args["core-lib"] = args["core-lib"] || inferred.coreLib;
+  args["core-dll"] = args["core-dll"] || inferred.coreDll;
 
   const sharedLibRequired = args.platform !== "win32";
   if (sharedLibRequired && !args["core-lib"]) {
