@@ -1,11 +1,11 @@
 "use strict";
 
 const platformPackages = {
-  "darwin-arm64": "@starryskyworld/quickcli-darwin-arm64",
-  "darwin-x64": "@starryskyworld/quickcli-darwin-x64",
-  "linux-arm64": "@starryskyworld/quickcli-linux-arm64",
-  "linux-x64": "@starryskyworld/quickcli-linux-x64",
-  "win32-x64": "@starryskyworld/quickcli-win32-x64",
+  "darwin-arm64": "@amethyst-labs/quickcli-darwin-arm64",
+  "darwin-x64": "@amethyst-labs/quickcli-darwin-x64",
+  "linux-arm64": "@amethyst-labs/quickcli-linux-arm64",
+  "linux-x64": "@amethyst-labs/quickcli-linux-x64",
+  "win32-x64": "@amethyst-labs/quickcli-win32-x64",
 };
 
 function currentKey() {

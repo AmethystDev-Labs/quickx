@@ -74,10 +74,16 @@ jobs:
         working-directory: npm
         run: npm install
 
-      - name: Set npm package version from tag
+      - name: Check npm version matches tag
         working-directory: npm
-        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version
         shell: bash
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
 
       - name: Sync optional dependency versions
         working-directory: npm
@@ -94,7 +100,6 @@ jobs:
           npm run prepare:platform -- \
             --platform "${{ matrix.platform }}" \
             --arch "${{ matrix.arch }}" \
-            --version "${GITHUB_REF_NAME#v}" \
             --output-dir "dist/platform-packages"
 
       - name: Publish platform package
@@ -122,10 +127,16 @@ jobs:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Set npm package version from tag
+      - name: Check npm version matches tag
         working-directory: npm
-        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version
         shell: bash
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
 
       - name: Sync optional dependency versions
         working-directory: npm

@@ -3,6 +3,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const packageJson = require("../package.json");
 
 function parseArgs(argv) {
   const args = {};
@@ -69,13 +70,15 @@ function inferArtifactPaths(platform) {
 
 function main() {
   const args = parseArgs(process.argv);
-  const required = ["platform", "arch", "version", "output-dir"];
+  const required = ["platform", "arch", "output-dir"];
 
   for (const key of required) {
     if (!args[key]) {
       throw new Error(`Missing required --${key}`);
     }
   }
+
+  args.version = args.version || packageJson.version;
 
   const inferred = inferArtifactPaths(args.platform);
   args.addon = args.addon || inferred.addon;
@@ -88,7 +91,7 @@ function main() {
     throw new Error(`Missing required --core-lib for ${args.platform}`);
   }
 
-  const packageName = `@starryskyworld/quickcli-${args.platform}-${args.arch}`;
+  const packageName = `@amethyst-labs/quickcli-${args.platform}-${args.arch}`;
   const packageDir = path.join(args["output-dir"], `${args.platform}-${args.arch}`);
   const readmePath = path.join(__dirname, "..", "README.md");
   const isWindows = args.platform === "win32";

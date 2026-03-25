@@ -8,11 +8,11 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
 const version = packageJson.version;
 const packageNames = [
-  "@starryskyworld/quickcli-darwin-arm64",
-  "@starryskyworld/quickcli-darwin-x64",
-  "@starryskyworld/quickcli-linux-arm64",
-  "@starryskyworld/quickcli-linux-x64",
-  "@starryskyworld/quickcli-win32-x64",
+  "@amethyst-labs/quickcli-darwin-arm64",
+  "@amethyst-labs/quickcli-darwin-x64",
+  "@amethyst-labs/quickcli-linux-arm64",
+  "@amethyst-labs/quickcli-linux-x64",
+  "@amethyst-labs/quickcli-win32-x64",
 ];
 
 packageJson.optionalDependencies = Object.fromEntries(
