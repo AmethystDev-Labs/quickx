@@ -38,13 +38,10 @@ function writeJSON(filePath, value) {
 
 function inferArtifactPaths(platform) {
   const addon = path.join("native", "build", "Release", "quickaddon.node");
-  const isWindows = platform === "win32";
-  const tui = path.join("bin", isWindows ? "quick-tui.exe" : "quick-tui");
 
   if (platform === "darwin") {
     return {
       addon,
-      tui,
       coreLib: path.join("native", "lib", "libquickcore.dylib"),
     };
   }
@@ -52,7 +49,6 @@ function inferArtifactPaths(platform) {
   if (platform === "linux") {
     return {
       addon,
-      tui,
       coreLib: path.join("native", "lib", "libquickcore.so"),
     };
   }
@@ -60,7 +56,6 @@ function inferArtifactPaths(platform) {
   if (platform === "win32") {
     return {
       addon,
-      tui,
       coreDll: path.join("native", "lib", "quickcore.dll"),
     };
   }
@@ -82,7 +77,6 @@ function main() {
 
   const inferred = inferArtifactPaths(args.platform);
   args.addon = args.addon || inferred.addon;
-  args.tui = args.tui || inferred.tui;
   args["core-lib"] = args["core-lib"] || inferred.coreLib;
   args["core-dll"] = args["core-dll"] || inferred.coreDll;
 
@@ -95,7 +89,6 @@ function main() {
   const packageDir = path.join(args["output-dir"], `${args.platform}-${args.arch}`);
   const readmePath = path.join(__dirname, "..", "README.md");
   const isWindows = args.platform === "win32";
-  const tuiFileName = isWindows ? "quick-tui.exe" : "quick-tui";
   const runtimeFiles = [];
 
   fs.rmSync(packageDir, { recursive: true, force: true });
@@ -120,9 +113,6 @@ function main() {
     );
     runtimeFiles.push(`native/build/Release/${path.basename(args["core-dll"])}`);
   }
-
-  copyFile(args.tui, path.join(packageDir, "bin", tuiFileName), isWindows ? undefined : 0o755);
-  runtimeFiles.push(`bin/${tuiFileName}`);
 
   if (fs.existsSync(readmePath)) {
     copyFile(readmePath, path.join(packageDir, "README.md"));
@@ -152,7 +142,6 @@ function main() {
       "",
       "module.exports = {",
       "  addonPath: path.join(__dirname, \"native\", \"build\", \"Release\", \"quickaddon.node\"),",
-      `  tuiPath: path.join(__dirname, "bin", "${tuiFileName}"),`,
       "};",
       "",
     ].join("\n"),

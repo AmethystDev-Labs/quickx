@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 "use strict";
 
-const { spawn, spawnSync } = require("child_process");
+const { spawn } = require("child_process");
 const readline = require("readline");
 const { Command } = require("commander");
-const { loadPlatformPackage } = require("../lib/platform");
+const { runInkTui } = require("../lib/ink-tui");
 
 let native;
 
@@ -219,13 +219,8 @@ function printTemplatePreview(id) {
   }
 }
 
-function spawnTUI() {
-  const binaryPath = loadPlatformPackage().tuiPath;
-  const result = spawnSync(binaryPath, { stdio: "inherit" });
-  if (result.error) {
-    throw result.error;
-  }
-  process.exit(result.status ?? 0);
+async function spawnInkTUI() {
+  await runInkTui(getNative());
 }
 
 async function runLogin(name, options) {
@@ -278,10 +273,6 @@ async function runAdd(name, options) {
   });
   console.log(`Config "${inputs.resolvedName}" added.`);
   console.log(`Run \`quick use ${inputs.resolvedName}\` to activate it.`);
-}
-
-if (process.argv.length <= 2) {
-  spawnTUI();
 }
 
 const program = new Command();
@@ -367,7 +358,16 @@ template
     printTemplatePreview(id);
   });
 
-program.parseAsync(process.argv).catch((err) => {
+async function main() {
+  if (process.argv.length <= 2) {
+    await spawnInkTUI();
+    return;
+  }
+
+  await program.parseAsync(process.argv);
+}
+
+main().catch((err) => {
   console.error(err.message || String(err));
   process.exit(1);
 });

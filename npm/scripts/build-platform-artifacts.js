@@ -9,7 +9,6 @@ const repoRoot = path.resolve(__dirname, "..", "..");
 const npmRoot = path.resolve(__dirname, "..");
 const nativeDir = path.join(npmRoot, "native");
 const nativeLibDir = path.join(nativeDir, "lib");
-const binDir = path.join(npmRoot, "bin");
 
 function run(cmd, args, cwd) {
   const useShell =
@@ -36,10 +35,6 @@ function sharedLibraryName() {
 
 function windowsImportLibraryName() {
   return "quickcore.lib";
-}
-
-function tuiBinaryName() {
-  return process.platform === "win32" ? "quick-tui.exe" : "quick-tui";
 }
 
 function nodeGypBin() {
@@ -249,7 +244,6 @@ function buildWindowsImportLibrary() {
 
 function buildGoArtifacts() {
   fs.mkdirSync(nativeLibDir, { recursive: true });
-  fs.mkdirSync(binDir, { recursive: true });
 
   run(
     "go",
@@ -262,7 +256,6 @@ function buildGoArtifacts() {
     ],
     repoRoot,
   );
-  run("go", ["build", "-o", path.join(binDir, tuiBinaryName()), "./cmd/quick-tui"], repoRoot);
 
   if (process.platform === "darwin") {
     run("install_name_tool", ["-id", "@rpath/libquickcore.dylib", macSharedLibPath()], repoRoot);
