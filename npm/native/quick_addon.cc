@@ -8,6 +8,7 @@ char* QuickStatusJSON();
 char* QuickListConfigsJSON();
 char* QuickUseConfig(char* name);
 char* QuickAddConfig(char* input);
+char* QuickUpdateConfig(char* input);
 char* QuickRemoveConfig(char* name);
 char* QuickListTemplatesJSON();
 char* QuickPreviewTemplateJSON(char* id);
@@ -107,6 +108,16 @@ napi_value AddConfig(napi_env env, napi_callback_info info) {
   return MakeString(env, result);
 }
 
+napi_value UpdateConfig(napi_env env, napi_callback_info info) {
+  char* input = ReadStringArg(env, info);
+  if (input == nullptr) {
+    return nullptr;
+  }
+  char* result = QuickUpdateConfig(input);
+  std::free(input);
+  return MakeString(env, result);
+}
+
 napi_value RemoveConfig(napi_env env, napi_callback_info info) {
   char* name = ReadStringArg(env, info);
   if (name == nullptr) {
@@ -197,6 +208,7 @@ napi_value Init(napi_env env, napi_value exports) {
       {"listConfigsJson", nullptr, ListConfigsJSON, nullptr, nullptr, nullptr, napi_default, nullptr},
       {"useConfig", nullptr, UseConfig, nullptr, nullptr, nullptr, napi_default, nullptr},
       {"addConfig", nullptr, AddConfig, nullptr, nullptr, nullptr, napi_default, nullptr},
+      {"updateConfig", nullptr, UpdateConfig, nullptr, nullptr, nullptr, napi_default, nullptr},
       {"removeConfig", nullptr, RemoveConfig, nullptr, nullptr, nullptr, napi_default, nullptr},
       {"listTemplatesJson", nullptr, ListTemplatesJSON, nullptr, nullptr, nullptr, napi_default, nullptr},
       {"previewTemplateJson", nullptr, PreviewTemplateJSON, nullptr, nullptr, nullptr, napi_default, nullptr},

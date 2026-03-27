@@ -34,6 +34,23 @@ function parseScope(scope) {
   return parsed.length > 0 ? parsed : ["codex"];
 }
 
+function configToUpdatePayload(config) {
+  return {
+    name: config.Name,
+    displayName: config.DisplayName || config.Name,
+    scope: Array.isArray(config.Scope) && config.Scope.length > 0 ? config.Scope : ["codex"],
+    baseUrl: config.BaseURL || "",
+    apiKey: config.APIKey || "",
+    model: config.Model || "",
+    wireApi: config.WireAPI || "responses",
+    authMethod: config.AuthMethod || "api_key",
+    reasoningEffort: config.ReasoningEffort || "",
+    modelVerbosity: config.ModelVerbosity || "",
+    templateId: config.TemplateID || "",
+    codexTomlContent: config.CodexTomlContent || "",
+  };
+}
+
 function openBrowser(url) {
   try {
     if (process.platform === "darwin") {
@@ -275,6 +292,30 @@ async function runAdd(name, options) {
   console.log(`Run \`quick use ${inputs.resolvedName}\` to activate it.`);
 }
 
+async function runEdit(name, options) {
+  const result = getNative().listConfigs();
+  const existing = (result.configs || []).find((config) => config.Name === name);
+  if (!existing) {
+    throw new Error(`No config named "${name}"`);
+  }
+
+  const payload = configToUpdatePayload(existing);
+  if (options.scope !== undefined) payload.scope = parseScope(options.scope);
+  if (options.baseUrl !== undefined) payload.baseUrl = options.baseUrl;
+  if (options.apiKey !== undefined) payload.apiKey = options.apiKey;
+  if (options.model !== undefined) payload.model = options.model;
+  if (options.wireApi !== undefined) payload.wireApi = options.wireApi;
+  if (options.authMethod !== undefined) payload.authMethod = options.authMethod;
+
+  getNative().updateConfig(payload);
+  if (result.activeConfig === name) {
+    getNative().useConfig(name);
+    console.log(`Config "${name}" updated and reapplied.`);
+    return;
+  }
+  console.log(`Config "${name}" updated.`);
+}
+
 const program = new Command();
 
 program
@@ -321,6 +362,20 @@ config
   .option("--from-template <id>", "Template ID", "")
   .action(async (name, options) => {
     await runAdd(name, options);
+  });
+
+config
+  .command("edit")
+  .argument("<name>")
+  .description("Edit an existing config")
+  .option("--scope <scope>", "Comma-separated scopes")
+  .option("--base-url <url>", "Provider API base URL")
+  .option("--api-key <key>", "API key")
+  .option("--model <model>", "Default model name")
+  .option("--wire-api <wireApi>", "Wire protocol")
+  .option("--auth-method <authMethod>", "Auth method")
+  .action(async (name, options) => {
+    await runEdit(name, options);
   });
 
 config

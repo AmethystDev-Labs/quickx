@@ -130,6 +130,54 @@ type addConfigInput struct {
 	AuthMethod string   `json:"authMethod"`
 }
 
+type updateConfigInput struct {
+	Name             string   `json:"name"`
+	DisplayName      string   `json:"displayName"`
+	Scope            []string `json:"scope"`
+	BaseURL          string   `json:"baseUrl"`
+	APIKey           string   `json:"apiKey"`
+	Model            string   `json:"model"`
+	WireAPI          string   `json:"wireApi"`
+	AuthMethod       string   `json:"authMethod"`
+	ReasoningEffort  string   `json:"reasoningEffort"`
+	ModelVerbosity   string   `json:"modelVerbosity"`
+	TemplateID       string   `json:"templateId"`
+	CodexTomlContent string   `json:"codexTomlContent"`
+}
+
+func normalizeConfigPayload(p updateConfigInput) quickconfig.Config {
+	scope := p.Scope
+	if len(scope) == 0 {
+		scope = []string{quickconfig.ScopeCodex}
+	}
+	wireAPI := p.WireAPI
+	if wireAPI == "" {
+		wireAPI = "responses"
+	}
+	authMethod := p.AuthMethod
+	if authMethod == "" {
+		authMethod = "api_key"
+	}
+	displayName := p.DisplayName
+	if displayName == "" {
+		displayName = p.Name
+	}
+	return quickconfig.Config{
+		Name:             p.Name,
+		DisplayName:      displayName,
+		Scope:            scope,
+		BaseURL:          p.BaseURL,
+		APIKey:           p.APIKey,
+		Model:            p.Model,
+		WireAPI:          wireAPI,
+		AuthMethod:       authMethod,
+		ReasoningEffort:  p.ReasoningEffort,
+		ModelVerbosity:   p.ModelVerbosity,
+		TemplateID:       p.TemplateID,
+		CodexTomlContent: p.CodexTomlContent,
+	}
+}
+
 //export QuickAddConfig
 func QuickAddConfig(input *C.char) *C.char {
 	var payload addConfigInput
@@ -164,6 +212,26 @@ func QuickAddConfig(input *C.char) *C.char {
 		AuthMethod:  payload.AuthMethod,
 	})
 	if err != nil {
+		return marshalResponse(nil, err)
+	}
+	return marshalResponse(map[string]string{"message": "ok"}, nil)
+}
+
+//export QuickUpdateConfig
+func QuickUpdateConfig(input *C.char) *C.char {
+	var payload updateConfigInput
+	if err := json.Unmarshal([]byte(C.GoString(input)), &payload); err != nil {
+		return marshalResponse(nil, fmt.Errorf("parse update config input: %w", err))
+	}
+	if payload.Name == "" {
+		return marshalResponse(nil, fmt.Errorf("config name is required"))
+	}
+
+	api, err := loadAPI()
+	if err != nil {
+		return marshalResponse(nil, err)
+	}
+	if err := api.UpdateConfig(normalizeConfigPayload(payload)); err != nil {
 		return marshalResponse(nil, err)
 	}
 	return marshalResponse(map[string]string{"message": "ok"}, nil)

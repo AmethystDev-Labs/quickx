@@ -77,6 +77,26 @@ function parseScope(scope) {
   return parsed.length > 0 ? parsed : ["codex"];
 }
 
+function configToUpdatePayload(config) {
+  return {
+    name: config.Name,
+    displayName: config.DisplayName || config.Name,
+    scope:
+      Array.isArray(config.Scope) && config.Scope.length > 0
+        ? config.Scope
+        : ["codex"],
+    baseUrl: config.BaseURL || "",
+    apiKey: config.APIKey || "",
+    model: config.Model || "",
+    wireApi: config.WireAPI || "responses",
+    authMethod: config.AuthMethod || "api_key",
+    reasoningEffort: config.ReasoningEffort || "",
+    modelVerbosity: config.ModelVerbosity || "",
+    templateId: config.TemplateID || "",
+    codexTomlContent: config.CodexTomlContent || "",
+  };
+}
+
 function openBrowser(url) {
   try {
     if (process.platform === "darwin") {
@@ -103,11 +123,50 @@ function openBrowser(url) {
 const addFieldDefs = [
   { key: "name", label: "Name", placeholder: "my-config", secret: false },
   { key: "scope", label: "Scope", placeholder: "codex", secret: false },
-  { key: "baseUrl", label: "Base URL", placeholder: "https://api.example.com/v1", secret: false },
+  {
+    key: "baseUrl",
+    label: "Base URL",
+    placeholder: "https://api.example.com/v1",
+    secret: false,
+  },
   { key: "apiKey", label: "API Key", placeholder: "(optional)", secret: true },
   { key: "model", label: "Model", placeholder: "(optional)", secret: false },
-  { key: "wireApi", label: "Wire API", placeholder: "responses", secret: false },
-  { key: "authMethod", label: "Auth Method", placeholder: "api_key", secret: false },
+  {
+    key: "wireApi",
+    label: "Wire API",
+    placeholder: "responses",
+    secret: false,
+  },
+  {
+    key: "authMethod",
+    label: "Auth Method",
+    placeholder: "api_key",
+    secret: false,
+  },
+];
+
+const editFieldDefs = [
+  { key: "scope", label: "Scope", placeholder: "codex", secret: false },
+  {
+    key: "baseUrl",
+    label: "Base URL",
+    placeholder: "https://api.example.com/v1",
+    secret: false,
+  },
+  { key: "apiKey", label: "API Key", placeholder: "(optional)", secret: true },
+  { key: "model", label: "Model", placeholder: "(optional)", secret: false },
+  {
+    key: "wireApi",
+    label: "Wire API",
+    placeholder: "responses",
+    secret: false,
+  },
+  {
+    key: "authMethod",
+    label: "Auth Method",
+    placeholder: "api_key",
+    secret: false,
+  },
 ];
 
 function defaultAddDraft() {
@@ -126,6 +185,17 @@ function defaultLoginDraft() {
   return {
     name: "",
     method: "browser",
+  };
+}
+
+function defaultEditDraft() {
+  return {
+    scope: "codex",
+    baseUrl: "",
+    apiKey: "",
+    model: "",
+    wireApi: "responses",
+    authMethod: "api_key",
   };
 }
 
@@ -170,6 +240,9 @@ async function runInkTui(nativeApi) {
     const [mode, setMode] = React.useState("browse");
     const [addDraft, setAddDraft] = React.useState(defaultAddDraft());
     const [addFieldIndex, setAddFieldIndex] = React.useState(0);
+    const [editConfigName, setEditConfigName] = React.useState("");
+    const [editDraft, setEditDraft] = React.useState(defaultEditDraft());
+    const [editFieldIndex, setEditFieldIndex] = React.useState(0);
     const [loginDraft, setLoginDraft] = React.useState(defaultLoginDraft());
     const [loginFieldIndex, setLoginFieldIndex] = React.useState(0);
 
@@ -184,7 +257,9 @@ async function runInkTui(nativeApi) {
           if (!result.configs || result.configs.length === 0) {
             setSelectedConfig(0);
           } else {
-            setSelectedConfig((index) => Math.min(index, result.configs.length - 1));
+            setSelectedConfig((index) =>
+              Math.min(index, result.configs.length - 1),
+            );
           }
         } else if (tab === "templates") {
           const rows = nativeApi.listTemplates() || [];
@@ -247,6 +322,27 @@ async function runInkTui(nativeApi) {
       setError("");
     }, []);
 
+    const openEditForm = React.useCallback(() => {
+      if (!selectedConfigRow) {
+        setError("No config selected");
+        return;
+      }
+      const payload = configToUpdatePayload(selectedConfigRow);
+      setMode("edit");
+      setEditConfigName(payload.name);
+      setEditDraft({
+        scope: (payload.scope || []).join(","),
+        baseUrl: payload.baseUrl || "",
+        apiKey: payload.apiKey || "",
+        model: payload.model || "",
+        wireApi: payload.wireApi || "responses",
+        authMethod: payload.authMethod || "api_key",
+      });
+      setEditFieldIndex(0);
+      setMessage(`Edit config: ${payload.name}`);
+      setError("");
+    }, [selectedConfigRow]);
+
     const submitAddForm = React.useCallback(() => {
       try {
         const resolvedName = (addDraft.name || "").trim() || "my-config";
@@ -270,12 +366,42 @@ async function runInkTui(nativeApi) {
       }
     }, [addDraft, nativeApi, refresh]);
 
+    const submitEditForm = React.useCallback(() => {
+      try {
+        const existing = configs.find((config) => config.Name === editConfigName);
+        if (!existing) {
+          throw new Error(`No config named "${editConfigName}"`);
+        }
+        const payload = configToUpdatePayload(existing);
+        payload.scope = parseScope(editDraft.scope || "codex");
+        payload.baseUrl = (editDraft.baseUrl || "").trim();
+        payload.apiKey = editDraft.apiKey || "";
+        payload.model = (editDraft.model || "").trim();
+        payload.wireApi = (editDraft.wireApi || "").trim() || "responses";
+        payload.authMethod = (editDraft.authMethod || "").trim() || "api_key";
+
+        nativeApi.updateConfig(payload);
+        if (activeConfig === payload.name) {
+          nativeApi.useConfig(payload.name);
+        }
+        setMode("browse");
+        setTab("configs");
+        setMessage(`Config "${payload.name}" updated`);
+        setError("");
+        refresh();
+      } catch (err) {
+        setError(err.message || String(err));
+      }
+    }, [configs, editConfigName, editDraft, nativeApi, activeConfig, refresh]);
+
     const submitLoginForm = React.useCallback(() => {
       setLoading(true);
       try {
         if (loginDraft.method === "device") {
           const result = nativeApi.loginCodexRequestDevice();
-          setMessage(`Device code: ${result.userCode} | URL: ${result.verificationUrl}`);
+          setMessage(
+            `Device code: ${result.userCode} | URL: ${result.verificationUrl}`,
+          );
           nativeApi.loginCodexCompleteDevice(result.handleId);
         } else {
           const result = nativeApi.loginCodexBrowserStart();
@@ -286,7 +412,9 @@ async function runInkTui(nativeApi) {
           }
           nativeApi.loginCodexBrowserWait(result.handleId);
         }
-        const created = nativeApi.createCodexLoginConfig((loginDraft.name || "").trim());
+        const created = nativeApi.createCodexLoginConfig(
+          (loginDraft.name || "").trim(),
+        );
         setMode("browse");
         setTab("configs");
         setMessage(`Login complete, created "${created.name}"`);
@@ -300,21 +428,33 @@ async function runInkTui(nativeApi) {
     }, [loginDraft, nativeApi, refresh]);
 
     useInput((input, key) => {
+      const ctrl = Boolean(key.ctrl);
+
       if (mode === "add") {
         if (key.escape) {
           setMode("browse");
           setMessage("Canceled add config");
           return;
         }
-        if (key.upArrow || input === "k") {
-          setAddFieldIndex((index) => prevFieldIndex(index, addFieldDefs.length));
+        if (key.upArrow) {
+          setAddFieldIndex((index) =>
+            prevFieldIndex(index, addFieldDefs.length),
+          );
           return;
         }
-        if (key.downArrow || input === "j" || key.tab || key.return) {
-          setAddFieldIndex((index) => nextFieldIndex(index, addFieldDefs.length));
+        if (key.downArrow) {
+          setAddFieldIndex((index) =>
+            nextFieldIndex(index, addFieldDefs.length),
+          );
           return;
         }
-        if (input === "s") {
+        if (key.return) {
+          setAddFieldIndex((index) =>
+            nextFieldIndex(index, addFieldDefs.length),
+          );
+          return;
+        }
+        if (ctrl && input === "s") {
           submitAddForm();
           return;
         }
@@ -322,7 +462,10 @@ async function runInkTui(nativeApi) {
           const fieldKey = addFieldDefs[addFieldIndex].key;
           setAddDraft((draft) => ({
             ...draft,
-            [fieldKey]: draft[fieldKey].slice(0, Math.max(0, draft[fieldKey].length - 1)),
+            [fieldKey]: draft[fieldKey].slice(
+              0,
+              Math.max(0, draft[fieldKey].length - 1),
+            ),
           }));
           return;
         }
@@ -336,25 +479,81 @@ async function runInkTui(nativeApi) {
         return;
       }
 
+      if (mode === "edit") {
+        if (key.escape) {
+          setMode("browse");
+          setMessage("Canceled edit config");
+          return;
+        }
+        if (key.upArrow) {
+          setEditFieldIndex((index) =>
+            prevFieldIndex(index, editFieldDefs.length),
+          );
+          return;
+        }
+        if (key.downArrow) {
+          setEditFieldIndex((index) =>
+            nextFieldIndex(index, editFieldDefs.length),
+          );
+          return;
+        }
+        if (key.return) {
+          setEditFieldIndex((index) =>
+            nextFieldIndex(index, editFieldDefs.length),
+          );
+          return;
+        }
+        if (ctrl && input === "s") {
+          submitEditForm();
+          return;
+        }
+        if (key.backspace || key.delete) {
+          const fieldKey = editFieldDefs[editFieldIndex].key;
+          setEditDraft((draft) => ({
+            ...draft,
+            [fieldKey]: draft[fieldKey].slice(
+              0,
+              Math.max(0, draft[fieldKey].length - 1),
+            ),
+          }));
+          return;
+        }
+        if (isPrintableInput(input, key)) {
+          const fieldKey = editFieldDefs[editFieldIndex].key;
+          setEditDraft((draft) => ({
+            ...draft,
+            [fieldKey]: `${draft[fieldKey]}${input}`,
+          }));
+        }
+        return;
+      }
+
       if (mode === "login") {
         if (key.escape) {
           setMode("browse");
           setMessage("Canceled login");
           return;
         }
-        if (key.upArrow || input === "k") {
+        if (key.upArrow) {
           setLoginFieldIndex((index) => prevFieldIndex(index, 2));
           return;
         }
-        if (key.downArrow || input === "j" || key.tab || key.return) {
+        if (key.downArrow) {
           setLoginFieldIndex((index) => nextFieldIndex(index, 2));
           return;
         }
-        if (input === "s") {
+        if (key.return) {
+          setLoginFieldIndex((index) => nextFieldIndex(index, 2));
+          return;
+        }
+        if (ctrl && input === "s") {
           submitLoginForm();
           return;
         }
-        if (loginFieldIndex === 1 && (key.leftArrow || key.rightArrow || input === "m")) {
+        if (
+          loginFieldIndex === 1 &&
+          (ctrl && (key.leftArrow || key.rightArrow || input === "m"))
+        ) {
           setLoginDraft((draft) => ({
             ...draft,
             method: draft.method === "browser" ? "device" : "browser",
@@ -379,7 +578,7 @@ async function runInkTui(nativeApi) {
         return;
       }
 
-      if (key.escape || input === "q") {
+      if (key.escape || (ctrl && input === "q")) {
         exit();
         return;
       }
@@ -388,22 +587,24 @@ async function runInkTui(nativeApi) {
       if (input === "2") setTab("configs");
       if (input === "3") setTab("templates");
 
-      if (input === "r") {
+      if (ctrl && input === "r") {
         refresh();
         setMessage("Refreshed");
         return;
       }
 
       if (tab === "configs") {
-        if (key.upArrow || input === "k") {
+        if (key.upArrow) {
           setSelectedConfig((index) => Math.max(0, index - 1));
           return;
         }
-        if (key.downArrow || input === "j") {
-          setSelectedConfig((index) => Math.min(Math.max(0, configs.length - 1), index + 1));
+        if (key.downArrow) {
+          setSelectedConfig((index) =>
+            Math.min(Math.max(0, configs.length - 1), index + 1),
+          );
           return;
         }
-        if ((input === "u" || key.return) && selectedConfigRow) {
+        if ((key.return || (ctrl && input === "u")) && selectedConfigRow) {
           try {
             nativeApi.useConfig(selectedConfigRow.Name);
             setMessage(`Activated ${selectedConfigRow.Name}`);
@@ -413,7 +614,7 @@ async function runInkTui(nativeApi) {
           }
           return;
         }
-        if (input === "d" && selectedConfigRow) {
+        if (ctrl && input === "d" && selectedConfigRow) {
           try {
             nativeApi.removeConfig(selectedConfigRow.Name);
             setMessage(`Removed ${selectedConfigRow.Name}`);
@@ -423,23 +624,29 @@ async function runInkTui(nativeApi) {
           }
           return;
         }
-        if (input === "a") {
+        if (ctrl && input === "a") {
           openAddForm();
           return;
         }
-        if (input === "l") {
+        if (ctrl && input === "e") {
+          openEditForm();
+          return;
+        }
+        if (ctrl && input === "l") {
           openLoginForm();
         }
         return;
       }
 
       if (tab === "templates") {
-        if (key.upArrow || input === "k") {
+        if (key.upArrow) {
           setSelectedTemplate((index) => Math.max(0, index - 1));
           return;
         }
-        if (key.downArrow || input === "j") {
-          setSelectedTemplate((index) => Math.min(Math.max(0, templates.length - 1), index + 1));
+        if (key.downArrow) {
+          setSelectedTemplate((index) =>
+            Math.min(Math.max(0, templates.length - 1), index + 1),
+          );
         }
       }
     });
@@ -448,17 +655,23 @@ async function runInkTui(nativeApi) {
       ? previewCache[selectedTemplateRow.ID] || null
       : null;
 
-    const tabLine = tabs.map((item) => {
-      if (item.id === tab) return `[${item.label}]`;
-      return ` ${item.label} `;
-    }).join(" ");
+    const tabLine = tabs
+      .map((item) => {
+        if (item.id === tab) return `[${item.label}]`;
+        return ` ${item.label} `;
+      })
+      .join(" ");
 
     const hints = {
-      status: "Keys: 1/2/3 switch | r refresh | q quit",
-      configs: "Keys: j/k move | Enter/u use | d delete | a add | l login | r refresh | q quit",
-      templates: "Keys: j/k move | r refresh | q quit",
-      add: "Add form: j/k move field | type | s submit | Esc cancel",
-      login: "Login form: j/k move field | m or <- -> toggle method | s submit | Esc cancel",
+      status: "Keys: 1/2/3 switch | Ctrl+r refresh | Ctrl+q quit",
+      configs:
+        "Keys: Up/Down move | Enter or Ctrl+u use | Ctrl+a add | Ctrl+e edit | Ctrl+d delete | Ctrl+l login | Ctrl+r refresh | Ctrl+q quit",
+      templates: "Keys: Up/Down move | Ctrl+r refresh | Ctrl+q quit",
+      add: "Add form: Up/Down move field | Enter next | type | Ctrl+s submit | Esc cancel",
+      edit:
+        "Edit form: Up/Down move field | Enter next | type | Ctrl+s submit | Esc cancel",
+      login:
+        "Login form: Up/Down move field | Enter next | Ctrl+m or Ctrl+<- -> toggle method | Ctrl+s submit | Esc cancel",
     };
 
     const configWindow = pickWindow(configs, selectedConfig, 14);
@@ -476,15 +689,33 @@ async function runInkTui(nativeApi) {
       );
     });
 
+    const editFormRows = editFieldDefs.map((field, index) => {
+      const focused = index === editFieldIndex;
+      const rawValue = editDraft[field.key] || "";
+      const shown = field.secret ? maskKey(rawValue) : rawValue;
+      const displayValue = shown || field.placeholder;
+      return h(
+        Text,
+        { key: `edit-${field.key}`, color: focused ? "greenBright" : "white" },
+        `${focused ? ">" : " "} ${field.label.padEnd(12, " ")} : ${displayValue}`,
+      );
+    });
+
     const loginRows = [
       h(
         Text,
-        { key: "login-name", color: loginFieldIndex === 0 ? "greenBright" : "white" },
+        {
+          key: "login-name",
+          color: loginFieldIndex === 0 ? "greenBright" : "white",
+        },
         `${loginFieldIndex === 0 ? ">" : " "} Name        : ${loginDraft.name || "(auto)"}`,
       ),
       h(
         Text,
-        { key: "login-method", color: loginFieldIndex === 1 ? "greenBright" : "white" },
+        {
+          key: "login-method",
+          color: loginFieldIndex === 1 ? "greenBright" : "white",
+        },
         `${loginFieldIndex === 1 ? ">" : " "} Method      : ${loginDraft.method}`,
       ),
     ];
@@ -492,93 +723,203 @@ async function runInkTui(nativeApi) {
     return h(
       Box,
       { flexDirection: "column", paddingX: 1, paddingY: 1 },
-      h(Text, { color: "cyanBright", bold: true }, "QuickCLI Ink TUI"),
+      h(Text, { color: "cyanBright", bold: true }, "QuickCLI"),
       h(Text, { color: "gray" }, tabLine),
       h(Text, null, ""),
-      mode === "add" && h(
-        Box,
-        { borderStyle: "round", borderColor: "green", paddingX: 1, flexDirection: "column" },
-        h(Text, { bold: true }, "Add Config"),
-        ...addFormRows,
-      ),
-      mode === "login" && h(
-        Box,
-        { borderStyle: "round", borderColor: "yellow", paddingX: 1, flexDirection: "column" },
-        h(Text, { bold: true }, "Codex Login"),
-        ...loginRows,
-      ),
-      mode === "browse" && tab === "status" && h(
-        Box,
-        { borderStyle: "round", borderColor: "blue", paddingX: 1, paddingY: 0, flexDirection: "column" },
-        ...(statusLines(status || {}).map((line, index) => h(Text, { key: `status-${index}` }, line))),
-      ),
-      mode === "browse" && tab === "configs" && h(
-        Box,
-        { gap: 1 },
+      mode === "add" &&
         h(
           Box,
-          { borderStyle: "round", borderColor: "green", paddingX: 1, flexDirection: "column", width: 72 },
-          h(Text, { bold: true }, "Configs"),
-          ...(configs.length === 0
-            ? [h(Text, { key: "empty-configs", color: "gray" }, "No configs found.")]
-            : configWindow.rows.map((config, index) => {
-              const absolute = configWindow.start + index;
-              const marker = absolute === selectedConfig ? ">" : " ";
-              const active = config.Name === activeConfig ? "*" : " ";
-              const scope = truncate((config.Scope || []).join(","), 16).padEnd(16, " ");
-              const name = truncate(config.Name || "-", 24).padEnd(24, " ");
-              const display = truncate(config.DisplayName || config.Name || "-", 24);
-              return h(
+          {
+            borderStyle: "round",
+            borderColor: "green",
+            paddingX: 1,
+            flexDirection: "column",
+          },
+          h(Text, { bold: true }, "Add Config"),
+          ...addFormRows,
+        ),
+      mode === "edit" &&
+        h(
+          Box,
+          {
+            borderStyle: "round",
+            borderColor: "cyan",
+            paddingX: 1,
+            flexDirection: "column",
+          },
+          h(Text, { bold: true }, `Edit Config: ${editConfigName || "-"}`),
+          ...editFormRows,
+        ),
+      mode === "login" &&
+        h(
+          Box,
+          {
+            borderStyle: "round",
+            borderColor: "yellow",
+            paddingX: 1,
+            flexDirection: "column",
+          },
+          h(Text, { bold: true }, "Codex Login"),
+          ...loginRows,
+        ),
+      mode === "browse" &&
+        tab === "status" &&
+        h(
+          Box,
+          {
+            borderStyle: "round",
+            borderColor: "blue",
+            paddingX: 1,
+            paddingY: 0,
+            flexDirection: "column",
+          },
+          ...statusLines(status || {}).map((line, index) =>
+            h(Text, { key: `status-${index}` }, line),
+          ),
+        ),
+      mode === "browse" &&
+        tab === "configs" &&
+        h(
+          Box,
+          { gap: 1 },
+          h(
+            Box,
+            {
+              borderStyle: "round",
+              borderColor: "green",
+              paddingX: 1,
+              flexDirection: "column",
+              width: 72,
+            },
+            h(Text, { bold: true }, "Configs"),
+            ...(configs.length === 0
+              ? [
+                  h(
+                    Text,
+                    { key: "empty-configs", color: "gray" },
+                    "No configs found.",
+                  ),
+                ]
+              : configWindow.rows.map((config, index) => {
+                  const absolute = configWindow.start + index;
+                  const marker = absolute === selectedConfig ? ">" : " ";
+                  const active = config.Name === activeConfig ? "*" : " ";
+                  const scope = truncate(
+                    (config.Scope || []).join(","),
+                    16,
+                  ).padEnd(16, " ");
+                  const name = truncate(config.Name || "-", 24).padEnd(24, " ");
+                  const display = truncate(
+                    config.DisplayName || config.Name || "-",
+                    24,
+                  );
+                  return h(
+                    Text,
+                    {
+                      key: `cfg-${config.Name}-${absolute}`,
+                      color:
+                        absolute === selectedConfig ? "greenBright" : undefined,
+                    },
+                    `${marker}${active} ${name} ${scope} ${display}`,
+                  );
+                })),
+          ),
+          h(
+            Box,
+            {
+              borderStyle: "round",
+              borderColor: "yellow",
+              paddingX: 1,
+              flexDirection: "column",
+              width: 45,
+            },
+            h(Text, { bold: true }, "Selected"),
+            !selectedConfigRow &&
+              h(Text, { color: "gray" }, "No config selected."),
+            selectedConfigRow &&
+              h(Text, null, `Name: ${selectedConfigRow.Name || "-"}`),
+            selectedConfigRow &&
+              h(Text, null, `Display: ${selectedConfigRow.DisplayName || "-"}`),
+            selectedConfigRow &&
+              h(
                 Text,
-                { key: `cfg-${config.Name}-${absolute}`, color: absolute === selectedConfig ? "greenBright" : undefined },
-                `${marker}${active} ${name} ${scope} ${display}`,
-              );
-            })),
+                null,
+                `Scope: ${(selectedConfigRow.Scope || []).join(", ") || "-"}`,
+              ),
+            selectedConfigRow &&
+              h(Text, null, `Base: ${selectedConfigRow.BaseURL || "-"}`),
+            selectedConfigRow &&
+              h(Text, null, `Model: ${selectedConfigRow.Model || "-"}`),
+            selectedConfigRow &&
+              h(Text, null, `Key: ${maskKey(selectedConfigRow.APIKey)}`),
+          ),
         ),
+      mode === "browse" &&
+        tab === "templates" &&
         h(
           Box,
-          { borderStyle: "round", borderColor: "yellow", paddingX: 1, flexDirection: "column", width: 45 },
-          h(Text, { bold: true }, "Selected"),
-          !selectedConfigRow && h(Text, { color: "gray" }, "No config selected."),
-          selectedConfigRow && h(Text, null, `Name: ${selectedConfigRow.Name || "-"}`),
-          selectedConfigRow && h(Text, null, `Display: ${selectedConfigRow.DisplayName || "-"}`),
-          selectedConfigRow && h(Text, null, `Scope: ${(selectedConfigRow.Scope || []).join(", ") || "-"}`),
-          selectedConfigRow && h(Text, null, `Base: ${selectedConfigRow.BaseURL || "-"}`),
-          selectedConfigRow && h(Text, null, `Model: ${selectedConfigRow.Model || "-"}`),
-          selectedConfigRow && h(Text, null, `Key: ${maskKey(selectedConfigRow.APIKey)}`),
+          { gap: 1 },
+          h(
+            Box,
+            {
+              borderStyle: "round",
+              borderColor: "magenta",
+              paddingX: 1,
+              flexDirection: "column",
+              width: 72,
+            },
+            h(Text, { bold: true }, "Templates"),
+            ...(templates.length === 0
+              ? [
+                  h(
+                    Text,
+                    { key: "empty-templates", color: "gray" },
+                    "No templates available.",
+                  ),
+                ]
+              : templateWindow.rows.map((template, index) => {
+                  const absolute = templateWindow.start + index;
+                  const marker = absolute === selectedTemplate ? ">" : " ";
+                  const id = truncate(template.ID || "-", 22).padEnd(22, " ");
+                  const display = truncate(
+                    template.DisplayName || "-",
+                    34,
+                  ).padEnd(34, " ");
+                  const scope = truncate((template.Scope || []).join(","), 12);
+                  return h(
+                    Text,
+                    {
+                      key: `tpl-${template.ID}-${absolute}`,
+                      color:
+                        absolute === selectedTemplate
+                          ? "magentaBright"
+                          : undefined,
+                    },
+                    `${marker} ${id} ${display} ${scope}`,
+                  );
+                })),
+          ),
+          h(
+            Box,
+            {
+              borderStyle: "round",
+              borderColor: "yellow",
+              paddingX: 1,
+              flexDirection: "column",
+              width: 45,
+            },
+            h(Text, { bold: true }, "Preview"),
+            ...templateDetailLines(currentPreview).map((line, index) =>
+              h(Text, { key: `preview-${index}` }, line),
+            ),
+          ),
         ),
-      ),
-      mode === "browse" && tab === "templates" && h(
-        Box,
-        { gap: 1 },
-        h(
-          Box,
-          { borderStyle: "round", borderColor: "magenta", paddingX: 1, flexDirection: "column", width: 72 },
-          h(Text, { bold: true }, "Templates"),
-          ...(templates.length === 0
-            ? [h(Text, { key: "empty-templates", color: "gray" }, "No templates available.")]
-            : templateWindow.rows.map((template, index) => {
-              const absolute = templateWindow.start + index;
-              const marker = absolute === selectedTemplate ? ">" : " ";
-              const id = truncate(template.ID || "-", 22).padEnd(22, " ");
-              const display = truncate(template.DisplayName || "-", 34).padEnd(34, " ");
-              const scope = truncate((template.Scope || []).join(","), 12);
-              return h(
-                Text,
-                { key: `tpl-${template.ID}-${absolute}`, color: absolute === selectedTemplate ? "magentaBright" : undefined },
-                `${marker} ${id} ${display} ${scope}`,
-              );
-            })),
-        ),
-        h(
-          Box,
-          { borderStyle: "round", borderColor: "yellow", paddingX: 1, flexDirection: "column", width: 45 },
-          h(Text, { bold: true }, "Preview"),
-          ...(templateDetailLines(currentPreview).map((line, index) => h(Text, { key: `preview-${index}` }, line))),
-        ),
-      ),
       h(Text, null, ""),
-      h(Text, { color: loading ? "yellow" : "gray" }, loading ? "Loading..." : hints[mode === "browse" ? tab : mode]),
+      h(
+        Text,
+        { color: loading ? "yellow" : "gray" },
+        loading ? "Loading..." : hints[mode === "browse" ? tab : mode],
+      ),
       message && h(Text, { color: "green" }, message),
       error && h(Text, { color: "redBright" }, `Error: ${error}`),
     );

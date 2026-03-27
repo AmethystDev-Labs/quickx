@@ -67,6 +67,16 @@ func (a *API) RemoveConfig(name string) error {
 	return a.store.Save()
 }
 
+func (a *API) UpdateConfig(c config.Config) error {
+	if c.DisplayName == "" {
+		c.DisplayName = c.Name
+	}
+	if err := a.store.Update(c); err != nil {
+		return err
+	}
+	return a.store.Save()
+}
+
 // CreateConfigFromTemplate fills a template with answers and saves the config.
 func (a *API) CreateConfigFromTemplate(name string, tmpl tmplpkg.Template, answers map[string]string) error {
 	c := config.Config{

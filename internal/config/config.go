@@ -83,6 +83,17 @@ func (s *Store) Remove(name string) error {
 	return fmt.Errorf("config %q not found", name)
 }
 
+// Update replaces an existing config with the same name.
+func (s *Store) Update(c Config) error {
+	for i := range s.Configs {
+		if s.Configs[i].Name == c.Name {
+			s.Configs[i] = c
+			return nil
+		}
+	}
+	return fmt.Errorf("config %q not found", c.Name)
+}
+
 // ForScope returns all configs that apply to the given scope.
 func (s *Store) ForScope(scope string) []Config {
 	var out []Config

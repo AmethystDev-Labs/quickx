@@ -1,7 +1,7 @@
 package main
 
-import "github.com/quickcli/quick/cmd"
+import "fmt"
 
 func main() {
-	cmd.Execute()
+	fmt.Println("QuickCLI Go CLI has been removed. Use the Node.js package (commander + Ink).")
 }

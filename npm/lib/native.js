@@ -30,6 +30,10 @@ module.exports = {
     return unwrap(addon.addConfig(JSON.stringify(input)));
   },
 
+  updateConfig(input) {
+    return unwrap(addon.updateConfig(JSON.stringify(input)));
+  },
+
   removeConfig(name) {
     return unwrap(addon.removeConfig(name));
   },

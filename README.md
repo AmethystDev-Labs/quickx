@@ -23,10 +23,10 @@ Switch AI coding assistant providers — Claude Code, OpenAI Codex, and OpenCode
 ## Installation
 
 ```bash
-npm install -g @starryskyworld/quickcli
+npm install -g @amethyst-labs/quickcli
 ```
 
-Or download a binary directly from [GitHub Releases](https://github.com/AmethystDev-Labs/QuickCLI/releases).
+Or download a packed npm package from [GitHub Releases](https://github.com/AmethystDev-Labs/QuickCLI/releases).
 
 ## Quick Start
 
