@@ -1,21 +1,12 @@
-# Binaries
-quick
-quick.exe
+# Build output
 dist/
-npm/dist/
-npm/node_modules/
-npm/*.tgz
-npm/bin/quick-tui
-npm/bin/quick-tui.exe
-npm/native/build/
-npm/native/lib/
-
-# Go build cache
-*.test
-*.out
-
-# GoReleaser
-.goreleaser/
+node_modules/
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
 
 # Local worktrees
 .worktrees/

@@ -1,122 +1,72 @@
-# QuickCLI (`quick`)
+# quickx
 
-[![Release](https://github.com/AmethystDev-Labs/QuickCLI/actions/workflows/release.yml/badge.svg)](https://github.com/AmethystDev-Labs/QuickCLI/actions/workflows/release.yml)
-[![npm version](https://img.shields.io/npm/v/@amethyst-labs/quickcli)](https://www.npmjs.com/package/@amethyst-labs/quickcli)
-[![npm downloads](https://img.shields.io/npm/dm/@amethyst-labs/quickcli)](https://www.npmjs.com/package/@amethyst-labs/quickcli)
-[![Node.js ≥16](https://img.shields.io/node/v/@amethyst-labs/quickcli)](https://nodejs.org)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+`quickx` is a Codex-only profile manager with a Commander CLI and an Ink TUI.
 
-Switch AI coding assistant providers — Claude Code, OpenAI Codex, and OpenCode — with a single command.
+It keeps the existing terminal-first workflow, but the project is now a pure Node.js + TypeScript app. There is no Go core, no native bridge, no platform packages, no Claude Code/OpenCode support, and no template system.
 
-## Documentation
-
-| Guide | Description |
-|---|---|
-| [Installation](docs/installation.md) | npm, pre-built binaries, build from source |
-| [Commands](docs/commands.md) | Full CLI command reference |
-| [Configuration](docs/configuration.md) | Config file schema and what QuickCLI writes |
-| [Templates](docs/templates.md) | Template registry and magic syntax |
-| [TemplateFiles](docs/template-files.md) | Shipping extra Codex config with a template |
-| [Login](docs/login.md) | ChatGPT OAuth browser & device-code flows |
-| [Contributing](docs/contributing.md) | Add templates or contribute code |
-
-## Installation
+## Install
 
 ```bash
-npm install -g @amethyst-labs/quickcli
+yarn install
+yarn build
+node dist/index.js
 ```
 
-Or download a packed npm package from [GitHub Releases](https://github.com/AmethystDev-Labs/QuickCLI/releases).
-
-## Quick Start
+For global use after publishing:
 
 ```bash
-# Interactive TUI menu (bare invocation)
-quick
-
-# Add a config (interactive TUI wizard)
-quick config add
-
-# Add a config with flags
-quick config add privnode \
-  --scope codex,claudecode \
-  --base-url https://privnode.com/v1 \
-  --api-key sk-xxx \
-  --model gpt-5-codex
-
-# Add a config from a template
-quick config add --from-template openai
-
-# Log in with ChatGPT (creates a Codex config automatically)
-quick config login
-quick config login --device   # SSH / headless environments
-
-# List configs
-quick config list
-
-# Activate a config
-quick use privnode
-
-# Check current status
-quick status
+npm install -g quickx
 ```
+
+## What It Does
+
+- Stores Codex profiles in `~/.config/quickx/config.json` on macOS/Linux and `%APPDATA%\\quickx\\config.json` on Windows.
+- Writes the active profile into `~/.codex/config.toml`.
+- Updates `~/.codex/auth.json` for API-key mode.
+- Supports ChatGPT/Codex login via browser PKCE or device code and creates a Codex profile from the authenticated account.
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `quick` | Open interactive TUI main menu |
-| `quick config add [name] [flags]` | Add a config (TUI wizard or flags) |
-| `quick config list` | List all configs |
-| `quick config remove <name>` | Remove a config |
-| `quick config login [name]` | Log in with ChatGPT and create a Codex config |
-| `quick template list` | List registry templates |
-| `quick template preview <id>` | Preview a template |
-| `quick use <config-name>` | Activate a config |
-| `quick status` | Show active configuration |
+```bash
+# Launch the Ink TUI
+quickx
 
-## How It Works
+# Add a profile
+quickx config add my-openai \
+  --base-url https://api.openai.com/v1 \
+  --api-key sk-xxx \
+  --model gpt-5
 
-`quick` writes configuration to:
+# Log in with Codex / ChatGPT
+quickx config login
+quickx config login --device
 
-| Tool | Files |
-|---|---|
-| Claude Code | `~/.claude/settings.json` (`env` key) + shell profile |
-| Codex | `~/.codex/config.toml` + `~/.codex/auth.json` + shell profile |
-| OpenCode | `~/.config/opencode/opencode.json` or an existing `*.jsonc` / `*.json` main config in `~/.config/opencode/` |
+# List profiles
+quickx config list
 
-Restart your shell (or `source ~/.zshrc`) after running `quick use` for environment variable changes to take effect.
+# Edit or remove a profile
+quickx config edit my-openai --model gpt-5.1
+quickx config remove my-openai
 
-## Config Flags
+# Activate a profile
+quickx use my-openai
 
-| Flag | Description |
-|---|---|
-| `--scope` | Comma-separated: `codex`, `claudecode`, `opencode` (default: `codex`) |
-| `--base-url` | Provider API base URL |
-| `--api-key` | API key |
-| `--model` | Default model |
-| `--wire-api` | `responses` or `chat` |
-| `--auth-method` | `api_key`, `chatgpt`, `aws`, `gcp`, `azure` |
-| `--from-template` | Template ID (mutually exclusive with manual flags) |
-
-## Template Magic Syntax
-
-Templates use `${--:"<question>":"<default>"}` placeholders. When you run `quick config add --from-template <id>`, QuickCLI prompts you for each dynamic value:
-
-```yaml
-api_key: '${--:"Enter your API Key":""}'
-model: '${--:"Default model":"gpt-5-codex"}'
+# Show current state
+quickx status
 ```
 
-## Configuration
+## Profile Fields
 
-Config is stored at:
-- **Linux/macOS**: `~/.config/quickcli/config.yaml`
-- **Windows**: `%APPDATA%\quickcli\config.yaml`
+- `name`: internal profile key
+- `displayName`: human-readable label
+- `baseUrl`: Codex provider base URL
+- `apiKey`: API key for API-key mode
+- `model`: default model
+- `wireApi`: `responses` or `chat`
+- `authMethod`: `api_key` or `chatgpt`
+- `reasoningEffort`: Codex reasoning level
+- `modelVerbosity`: optional Codex verbosity override
 
-## License
+## Release
 
-GPL-v3
-
-## Community
-[Linux.do](https://linux.do)
+Publishing is tag-driven. Push a `v*` tag and GitHub Actions will build the package and publish to npm.

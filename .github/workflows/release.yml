@@ -7,155 +7,47 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
-  release-source-artifacts:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          go-version-file: go.mod
-          cache: true
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Check package version matches tag
+        shell: bash
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+
+      - name: Build
+        run: yarn build
+
+      - name: Publish
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_NAME#v}" == *beta* ]]; then
+            npm publish --provenance --access public --tag beta
+          else
+            npm publish --provenance --access public
+          fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-platform-package:
-    needs: release-source-artifacts
-    permissions:
-      contents: read
-      id-token: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: macos-15-intel
-            platform: darwin
-            arch: x64
-          - runner: macos-14
-            platform: darwin
-            arch: arm64
-          - runner: ubuntu-24.04
-            platform: linux
-            arch: x64
-          - runner: ubuntu-24.04-arm
-            platform: linux
-            arch: arm64
-          - runner: windows-2022
-            platform: win32
-            arch: x64
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Install npm build dependencies
-        working-directory: npm
-        run: npm install --ignore-scripts
-
-      - name: Check npm version matches tag
-        working-directory: npm
-        shell: bash
-        run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
-            exit 1
-          fi
-
-      - name: Sync optional dependency versions
-        working-directory: npm
-        run: npm run sync:platform-deps
-
-      - name: Copy README to npm package
-        run: cp README.md npm/README.md
-        shell: bash
-
-      - name: Prepare platform package
-        working-directory: npm
-        shell: bash
-        run: |
-          npm run prepare:platform -- \
-            --platform "${{ matrix.platform }}" \
-            --arch "${{ matrix.arch }}" \
-            --output-dir "dist/platform-packages"
-
-      - name: Publish platform package
-        working-directory: npm/dist/platform-packages/${{ matrix.platform }}-${{ matrix.arch }}
-        shell: bash
-        run: |
-          if [[ "${GITHUB_REF_NAME#v}" == *beta* ]]; then
-            npm publish --provenance --access public --tag beta
-          else
-            npm publish --provenance --access public
-          fi
-
-  publish-wrapper-package:
-    needs: publish-platform-package
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Check npm version matches tag
-        working-directory: npm
-        shell: bash
-        run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
-            exit 1
-          fi
-
-      - name: Sync optional dependency versions
-        working-directory: npm
-        run: npm run sync:platform-deps
-
-      - name: Copy README to npm package
-        run: cp README.md npm/README.md
-        shell: bash
-
-      - name: Publish main npm package
-        working-directory: npm
-        shell: bash
-        run: |
-          if [[ "${GITHUB_REF_NAME#v}" == *beta* ]]; then
-            npm publish --provenance --access public --tag beta
-          else
-            npm publish --provenance --access public
-          fi
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
