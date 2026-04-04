@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink";
 
 import { QuickxApi } from "./api.js";

@@ -40,9 +40,18 @@ export class QuickxApi {
   private store: StoreData = loadStore();
   private deviceHandles = new Map<string, DeviceCode>();
   private browserHandles = new Map<string, BrowserLoginSession>();
+  private _storeLoadedAt: number = Date.now();
 
   reload(): void {
-    this.store = loadStore();
+    if (Date.now() - this._storeLoadedAt > 50) {
+      this.store = loadStore();
+      this._storeLoadedAt = Date.now();
+    }
+  }
+
+  private _save(): void {
+    saveStore(this.store);
+    this._storeLoadedAt = Date.now();
   }
 
   status(): StatusInfo {
@@ -73,7 +82,7 @@ export class QuickxApi {
     }
 
     this.store.profiles.push(profile);
-    saveStore(this.store);
+    this._save();
     return { ...profile };
   }
 
@@ -89,7 +98,7 @@ export class QuickxApi {
     }
 
     this.store.profiles[index] = profile;
-    saveStore(this.store);
+    this._save();
 
     if (this.store.activeProfile === profile.name) {
       applyCodexProfile(profile, this.store.profiles);
@@ -110,7 +119,7 @@ export class QuickxApi {
       this.store.activeProfile = "";
     }
 
-    saveStore(this.store);
+    this._save();
   }
 
   useProfile(name: string): void {
@@ -122,7 +131,7 @@ export class QuickxApi {
 
     applyCodexProfile(profile, this.store.profiles);
     this.store.activeProfile = name;
-    saveStore(this.store);
+    this._save();
   }
 
   async loginCodexRequestDevice(): Promise<DeviceCodeInfo> {
@@ -194,7 +203,7 @@ export class QuickxApi {
       existing.displayName = displayName;
       existing.authMethod = "chatgpt";
       existing.apiKey = "";
-      saveStore(this.store);
+      this._save();
       return {
         name: existing.name,
         displayName: existing.displayName,
@@ -208,7 +217,7 @@ export class QuickxApi {
     });
 
     this.store.profiles.push(created);
-    saveStore(this.store);
+    this._save();
 
     return {
       name: created.name,

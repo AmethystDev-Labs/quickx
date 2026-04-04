@@ -29,6 +29,7 @@ export interface ProfileInput {
 }
 
 export interface StoreData {
+  version: number;
   activeProfile: string;
   profiles: CodexProfile[];
 }

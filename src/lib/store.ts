@@ -5,6 +5,7 @@ import { configFile, configHome } from "./paths.js";
 
 export function emptyStore(): StoreData {
   return {
+    version: 1,
     activeProfile: "",
     profiles: [],
   };
@@ -29,12 +30,21 @@ export function normalizeProfile(input: ProfileInput): CodexProfile {
   };
 }
 
+function migrateStore(data: StoreData): StoreData {
+  // v0 → v1: add version field (no structural changes needed)
+  if (!data.version) {
+    data.version = 1;
+  }
+
+  return data;
+}
+
 function normalizeStore(raw: unknown): StoreData {
   if (!raw || typeof raw !== "object") {
     return emptyStore();
   }
 
-  const data = raw as { activeProfile?: unknown; profiles?: unknown[] };
+  const data = raw as { version?: unknown; activeProfile?: unknown; profiles?: unknown[] };
   const profiles = Array.isArray(data.profiles)
     ? data.profiles
         .filter(
@@ -56,10 +66,11 @@ function normalizeStore(raw: unknown): StoreData {
         )
     : [];
 
-  return {
+  return migrateStore({
+    version: typeof data.version === "number" ? data.version : 0,
     activeProfile: String(data.activeProfile || ""),
     profiles,
-  };
+  });
 }
 
 export function loadStore(): StoreData {

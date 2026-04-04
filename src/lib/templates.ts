@@ -1,8 +1,13 @@
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import type { ProfileInput, Template, TemplatePlaceholder, TemplateSetup } from "../types.js";
-import { configHome } from "./paths.js";
+import type {
+  ProfileInput,
+  Template,
+  TemplatePlaceholder,
+  TemplateSetup,
+} from "../types.js";
+import { cacheHome } from "./paths.js";
 
 const REGISTRY_OWNER = "AmethystDev-Labs";
 const REGISTRY_REPO = "QuickCLI";
@@ -29,39 +34,8 @@ const builtinTemplates: Template[] = [
     authMethod: "api_key",
     docsUrl: "https://platform.openai.com/docs",
     requiredEnvs: [],
-    reasoningEffort: '${--:"Reasoning effort (minimal/low/medium/high/xhigh)":"high"}',
-    modelVerbosity: "",
-    codexTomlFile: "",
-    codexTomlContent: "",
-  },
-  {
-    id: "amethyst",
-    displayName: "Amethyst API",
-    scope: ["codex"],
-    baseUrl: "https://api.amethyst.ltd/v1",
-    apiKey: '${--:"Amethyst API Key":""}',
-    model: '${--:"Default model":"gpt-5.4"}',
-    wireApi: "responses",
-    authMethod: "api_key",
-    docsUrl: "https://amethyst.ltd",
-    requiredEnvs: [],
-    reasoningEffort: "",
-    modelVerbosity: "",
-    codexTomlFile: "",
-    codexTomlContent: "",
-  },
-  {
-    id: "privnode",
-    displayName: "Privnode",
-    scope: ["codex"],
-    baseUrl: '${--:"Privnode base URL":"https://privnode.com/v1"}',
-    apiKey: '${--:"Privnode API Key":""}',
-    model: '${--:"Default model":"gpt-5-codex"}',
-    wireApi: "responses",
-    authMethod: "api_key",
-    docsUrl: "https://privnode.com/docs",
-    requiredEnvs: [],
-    reasoningEffort: "",
+    reasoningEffort:
+      '${--:"Reasoning effort (minimal/low/medium/high/xhigh)":"high"}',
     modelVerbosity: "",
     codexTomlFile: "",
     codexTomlContent: "",
@@ -115,42 +89,10 @@ const builtinTemplates: Template[] = [
     codexTomlFile: "",
     codexTomlContent: "",
   },
-  {
-    id: "imsnake",
-    displayName: "ImSnake",
-    scope: ["codex"],
-    baseUrl: "https://imsnake.dart.us.ci/v1",
-    apiKey: '${--:"ImSnake API Key":""}',
-    model: '${--:"Default model":"gpt-5.4"}',
-    wireApi: "responses",
-    authMethod: "api_key",
-    docsUrl: "https://imsnake.dart.us.ci",
-    requiredEnvs: [],
-    reasoningEffort: "",
-    modelVerbosity: "",
-    codexTomlFile: "",
-    codexTomlContent: "",
-  },
-  {
-    id: "ame_event",
-    displayName: "AmeEvent",
-    scope: ["codex"],
-    baseUrl: "https://cx-nya.zeabur.app/v1",
-    apiKey: "AmethystLabs",
-    model: '${--:"Default model":"gpt-5.4"}',
-    wireApi: "responses",
-    authMethod: "api_key",
-    docsUrl: "",
-    requiredEnvs: [],
-    reasoningEffort: "",
-    modelVerbosity: "",
-    codexTomlFile: "",
-    codexTomlContent: "",
-  },
 ];
 
 function cacheDir(): string {
-  return path.join(configHome(), "template-cache");
+  return path.join(cacheHome(), "template-cache");
 }
 
 function cacheIndexPath(): string {
@@ -270,7 +212,9 @@ function loadCache(): Template[] | null {
       return null;
     }
 
-    const data = JSON.parse(readFileSync(cacheIndexPath(), "utf8")) as Template[];
+    const data = JSON.parse(
+      readFileSync(cacheIndexPath(), "utf8"),
+    ) as Template[];
     return Array.isArray(data) ? data.map(withDefaults) : null;
   } catch {
     return null;
@@ -297,7 +241,9 @@ async function httpGetJson<T>(url: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed (${response.status} ${response.statusText})`);
+    throw new Error(
+      `Request failed (${response.status} ${response.statusText})`,
+    );
   }
 
   return (await response.json()) as T;
@@ -312,13 +258,18 @@ async function httpGetText(url: string): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed (${response.status} ${response.statusText})`);
+    throw new Error(
+      `Request failed (${response.status} ${response.statusText})`,
+    );
   }
 
   return await response.text();
 }
 
-async function fetchTemplate(id: string, loadFiles: boolean): Promise<Template> {
+async function fetchTemplate(
+  id: string,
+  loadFiles: boolean,
+): Promise<Template> {
   const rawUrl = `https://raw.githubusercontent.com/${REGISTRY_OWNER}/${REGISTRY_REPO}/${REGISTRY_BRANCH}/${REGISTRY_PATH}/${id}/template.yaml`;
   const template = parseTemplateYaml(await httpGetText(rawUrl));
   if (!template.id) {
@@ -373,7 +324,9 @@ export async function listTemplates(): Promise<Template[]> {
     return mergeTemplates(builtinTemplates, cached);
   }
 
-  return builtinTemplates.filter((template) => template.scope.includes("codex"));
+  return builtinTemplates.filter((template) =>
+    template.scope.includes("codex"),
+  );
 }
 
 export async function fetchTemplateById(idOrUrl: string): Promise<Template> {

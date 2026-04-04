@@ -1,6 +1,21 @@
 import os from "node:os";
 import path from "node:path";
 
+export function cacheHome(): string {
+  if (process.platform === "win32") {
+    const base =
+      process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
+    return path.join(base, "quickx");
+  }
+
+  const xdgCacheHome = process.env.XDG_CACHE_HOME;
+  if (xdgCacheHome) {
+    return path.join(xdgCacheHome, "quickx");
+  }
+
+  return path.join(os.homedir(), ".cache", "quickx");
+}
+
 export function configHome(): string {
   if (process.platform === "win32") {
     const base =

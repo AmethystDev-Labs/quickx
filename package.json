@@ -1,6 +1,6 @@
 {
   "name": "@amethyst-labs/quickx",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Codex profile switcher with a Commander CLI and Ink TUI",
   "keywords": [
     "codex",
@@ -27,13 +27,13 @@
     "dev": "tsx src/index.tsx"
   },
   "dependencies": {
-    "commander": "^14.0.0",
-    "ink": "^4.4.1",
-    "react": "^18.3.1"
+    "commander": "^14.0.3",
+    "ink": "^6",
+    "react": "^19"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "@types/react": "^18.3.3",
+    "@types/node": "^24",
+    "@types/react": "^19",
     "tsup": "^8.3.5",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
