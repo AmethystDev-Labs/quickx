@@ -28,7 +28,7 @@ __metadata:
     tsx: "npm:^4.19.4"
     typescript: "npm:^5.8.3"
   bin:
-    quickx: ./dist/cli.js
+    quickx: ./dist/index.js
   languageName: unknown
   linkType: soft
 
