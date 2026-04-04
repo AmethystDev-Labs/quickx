@@ -9,11 +9,11 @@
     "react",
     "openai"
   ],
-  "homepage": "https://github.com/AmethystDev-Labs/quickx",
+  "homepage": "https://github.com/Ve-ria/quickx",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AmethystDev-Labs/quickx.git"
+    "url": "https://github.com/Ve-ria/quickx.git"
   },
   "type": "module",
   "packageManager": "yarn@4.13.0",
