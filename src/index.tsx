@@ -11,7 +11,7 @@ const api = new QuickxApi();
 
 const program = new Command("quickx")
   .description("QuickX — Codex profile manager")
-  .version("2.0.1")
+  .version("2.0.2")
   .allowExcessArguments(false)
   .action(async () => {
     await runInkTui(api);
