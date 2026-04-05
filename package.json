@@ -17,12 +17,12 @@
   },
   "type": "module",
   "packageManager": "yarn@4.13.0",
-  "bin": "./dist/index.js",
+  "bin": "./dist/index.mjs",
   "files": [
     "dist/"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "check": "tsc --noEmit",
     "dev": "tsx src/index.tsx"
   },
@@ -34,7 +34,7 @@
   "devDependencies": {
     "@types/node": "^24",
     "@types/react": "^19",
-    "tsup": "^8.3.5",
+    "tsdown": "^0.21.7",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   },

@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-yarn build          # Compile with tsup → dist/index.js
-yarn check          # TypeScript type-check (no emit)
-yarn dev            # Run from source with tsx (no build step)
-node dist/index.js  # Run compiled output directly
+yarn build           # Compile with tsdown → dist/index.mjs
+yarn check           # TypeScript type-check (no emit)
+yarn dev             # Run from source with tsx (no build step)
+node dist/index.mjs  # Run compiled output directly
 ```
 
 There are no tests. Publishing is tag-driven: push a `v*` tag and GitHub Actions publishes to npm.
@@ -68,4 +68,4 @@ Templates live in `AmethystDev-Labs/QuickCLI` on GitHub (fetched via GitHub API)
 
 ### Build
 
-`tsup` bundles `src/index.tsx` → `dist/index.js` as a single ESM file with `#!/usr/bin/env node` prepended. No separate shebang step needed. Do not add a shebang to `src/index.tsx` — it would be duplicated in the output.
+`tsdown` (Rolldown-based) bundles `src/index.tsx` → `dist/index.mjs` as a single ESM file with `#!/usr/bin/env node` prepended via `outputOptions.banner`. No separate shebang step needed. Do not add a shebang to `src/index.tsx` — it would be duplicated in the output.

@@ -1,12 +1,12 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: ["src/index.tsx"],
-  format: ["esm"],
+  format: "esm",
   target: "node20",
   outDir: "dist",
   clean: true,
-  banner: {
-    js: "#!/usr/bin/env node",
+  outputOptions: {
+    banner: "#!/usr/bin/env node\n",
   },
 });
