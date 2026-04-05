@@ -25,6 +25,7 @@ function TemplateAddOutput({
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [done, setDone] = React.useState<string | null>(null);
+  const [canceled, setCanceled] = React.useState(false);
 
   const [placeholders, setPlaceholders] = React.useState<TemplatePlaceholder[]>([]);
   const [displayName, setDisplayName] = React.useState("");
@@ -76,9 +77,15 @@ function TemplateAddOutput({
   }, [api, templateId]);
 
   useInput((input, key) => {
-    if (loading || done) return;
+    if (loading || done || canceled) return;
     const c = stateRef.current;
     const ctrl = Boolean(key.ctrl);
+
+    if (key.escape || (ctrl && input === "q")) {
+      setCanceled(true);
+      exit();
+      return;
+    }
 
     if (key.upArrow) {
       setFieldIndex((i) => (i - 1 + totalFields) % totalFields);
@@ -117,6 +124,7 @@ function TemplateAddOutput({
   });
 
   if (error) return <Text color="redBright">{error}</Text>;
+  if (canceled) return <Text color="gray">Canceled.</Text>;
 
   if (done) {
     return (
@@ -133,7 +141,7 @@ function TemplateAddOutput({
     <Box flexDirection="column">
       <Box borderStyle="round" borderColor="magenta" paddingX={1} flexDirection="column">
         <Text bold>Create profile from template: <Text color="magentaBright">{displayName}</Text></Text>
-        <Text color="gray">  Up/Down move field  ·  Ctrl+S or Enter on last field to confirm</Text>
+        <Text color="gray">  Up/Down move field  ·  Ctrl+S or Enter on last field to confirm  ·  Esc/Ctrl+Q to cancel</Text>
         <Text>{""}</Text>
 
         {/* Field 0: profile name */}
